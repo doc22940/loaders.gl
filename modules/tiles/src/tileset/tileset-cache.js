@@ -2,7 +2,7 @@
 // See LICENSE.md and https://github.com/AnalyticalGraphicsInc/cesium/blob/master/LICENSE.md
 
 import DoublyLinkedList from '../utils/doubly-linked-list';
-const defined = x => x !== undefined;
+const defined = x => x !== undefined && x !== null;
 
 /**
  * Stores tiles with content loaded.
@@ -26,15 +26,15 @@ export default class TilesetCache {
   }
 
   touch(tile) {
-    const node = tile.cacheNode;
+    const node = tile._cacheNode;
     if (defined(node)) {
       this._list.splice(this._sentinel, node);
     }
   }
 
   add(tileset, tile, addCallback) {
-    if (!defined(tile.cacheNode)) {
-      tile.cacheNode = this._list.add(tile);
+    if (!defined(tile._cacheNode)) {
+      tile._cacheNode = this._list.add(tile);
 
       if (addCallback) {
         addCallback(tileset, tile);
@@ -43,13 +43,13 @@ export default class TilesetCache {
   }
 
   unloadTile(tileset, tile, unloadCallback) {
-    const node = tile.cacheNode;
+    const node = tile._cacheNode;
     if (!defined(node)) {
       return;
     }
 
     this._list.remove(node);
-    tile.cacheNode = undefined;
+    tile._cacheNode = undefined;
     if (unloadCallback) {
       unloadCallback(tileset, tile);
     }

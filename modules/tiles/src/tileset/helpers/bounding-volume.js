@@ -9,7 +9,7 @@ import {assert} from '@loaders.gl/loader-utils';
 
 // const scratchProjectedBoundingSphere = new BoundingSphere();
 
-const defined = x => x !== undefined;
+const defined = x => x !== undefined && x !== null;
 
 const scratchMatrix = new Matrix3();
 const scratchScale = new Vector3();

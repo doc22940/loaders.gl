@@ -45,7 +45,7 @@ Paralleled with the [improvements](https://github.com/uber/deck.gl/pull/4139) in
 `@loaders.gl/3d-tiles`: Load Cesium 3D tiles
 
 - loaders
-  - `Tileset3DLoader`
+  - `Tiles3DLoader`
   - `Tile3DHeaderLoader`
 - Tile Classes
   - `Tileset3D`
@@ -59,7 +59,7 @@ Paralleled with the [improvements](https://github.com/uber/deck.gl/pull/4139) in
 `@loaders.gl/i3s`: Load ArcGIS I3S tiles
 
 - loaders
-  - `Tileset3DLoader`
+  - `Tiles3DLoader`
   - `Tile3DHeaderLoader`
 - Tile Classes
   - `I3STileset`
@@ -248,7 +248,7 @@ SimpleMesh Fields
 - `stats` ([`Stats`](https://uber-web.github.io/probe.gl/docs/api-reference/log/stats))): An instance of a probe.gl `Stats` object that contains information on how many tiles have been loaded etc. Easy to display using a probe.gl `StatsWidget`.
 - `tileset` (`Object`): The original tileset data this object instanced from.
 - `tilesLoaded` (`Boolean`): When `true`, all tiles that meet the screen space error this frame are loaded. The tileset is completely loaded for this view.
-- `totalMemoryUsageInBytes` (`Number`): The total amount of GPU memory in bytes used by the tileset. This value is estimated from geometry, texture, and batch table textures of loaded tiles. For point clouds, this value also includes per-point metadata.
+- `gpuMemoryUsageInBytes` (`Number`): The total amount of GPU memory in bytes used by the tileset. This value is estimated from geometry, texture, and batch table textures of loaded tiles. For point clouds, this value also includes per-point metadata.
 - `url` (`String`): The url to a tileset JSON file.
 - `zoom` (`Number[3]`): A web mercator zoom level that displays the entire tile set bounding volume
 
