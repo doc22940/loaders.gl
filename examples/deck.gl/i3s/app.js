@@ -6,11 +6,11 @@ import {StaticMap} from 'react-map-gl';
 
 import DeckGL from '@deck.gl/react';
 import {MapController, FlyToInterpolator} from '@deck.gl/core';
-import {I3S3DLayer} from './i3s-3d-layer';
+import Tile3DLayer from './tile-3d-layer';
+// import I3STIleLayer from './i3s-3d-layer/i3s-3d-layer';
+import {I3SLoader} from '@loaders.gl/i3s';
 import {StatsWidget} from '@probe.gl/stats-widget';
 import {lumaStats} from '@luma.gl/core';
-
-import {centerMap, cesiumRender, cesiumUnload} from './cesium';
 
 //SanFrancisco_Bldgs
 const TEST_DATA_URL =
@@ -34,8 +34,8 @@ const TRANSITION_DURAITON = 4000;
 //SF
 
 const INITIAL_VIEW_STATE = {
-  longitude: -122.43751306035713,
-  latitude: 37.78249440803938,
+  longitude: -120,
+  latitude: 34,
   height: 600,
   width: 800,
   pitch: 45,
@@ -91,10 +91,6 @@ export default class App extends PureComponent {
   }
 
   componentDidMount() {
-    const parsedUrl = new URL(window.location.href);
-    const renderCesium = parsedUrl.searchParams.get('cesium');
-    this.setState({renderCesium});
-
     this._memWidget = new StatsWidget(lumaStats.get('Memory Usage'), {
       framesPerUpdate: 1,
       formatters: {
@@ -119,10 +115,11 @@ export default class App extends PureComponent {
   _onTilesetLoad(tileset) {
     const {zoom, cartographicCenter} = tileset;
     const [longitude, latitude] = cartographicCenter;
+    console.log(zoom);
 
     const viewState = {
       ...this.state.viewState,
-      zoom,
+      zoom: zoom + 2.5,
       longitude,
       latitude
     };
@@ -137,40 +134,20 @@ export default class App extends PureComponent {
     });
 
     this._tilesetStatsWidget.setStats(tileset.stats);
-    // render with cesium
-    if (this.state.renderCesium) {
-      centerMap(viewState);
-    }
-  }
-
-  _onTileLoad(tile) {
-    if (this.state.renderCesium) {
-      const {viewState} = this.state;
-      cesiumRender(viewState, tile);
-    }
-  }
-
-  _onTileUnload(tile) {
-    if (this.state.renderCesium) {
-      cesiumUnload(tile);
-    }
   }
 
   _onViewStateChange({viewState}) {
     this.setState({viewState});
-
-    if (this.state.renderCesium) {
-      centerMap(viewState);
-    }
   }
 
   _renderLayers() {
     return [
-      new I3S3DLayer({
+      new Tile3DLayer({
         data: TEST_DATA_URL,
+        loader: I3SLoader,
         onTilesetLoad: this._onTilesetLoad.bind(this),
-        onTileLoad: this._onTileLoad.bind(this),
-        onTileUnload: this._onTileUnload.bind(this)
+        onTileLoad: () => this._updateStatWidgets(),
+        onTileUnload: () => this._updateStatWidgets()
       })
     ];
   }
@@ -194,6 +171,7 @@ export default class App extends PureComponent {
 
   render() {
     const layers = this._renderLayers();
+    const {viewState} = this.state;
 
     return (
       <div>
@@ -201,7 +179,7 @@ export default class App extends PureComponent {
         <DeckGL
           ref={_ => (this._deckRef = _)}
           layers={layers}
-          initialViewState={INITIAL_VIEW_STATE}
+          viewState={viewState}
           onViewStateChange={this._onViewStateChange.bind(this)}
           controller={{type: MapController, maxPitch: 85}}
           onAfterRender={() => this._updateStatWidgets()}

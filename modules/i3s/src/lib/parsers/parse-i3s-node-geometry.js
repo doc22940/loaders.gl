@@ -16,12 +16,12 @@ const scratchVector = new Vector3([0, 0, 0]);
 
 /* eslint-disable max-statements */
 export function parseI3SNodeGeometry(arrayBuffer, tile = {}) {
-  if (!tile._content) {
+  if (!tile.content) {
     return tile;
   }
 
-  const content = tile._content;
-  const mbs = tile._mbs;
+  const content = tile.content;
+  const mbs = tile.mbs;
 
   const {featureData} = content;
   content.attributes = {};
@@ -67,7 +67,7 @@ export function parseI3SNodeGeometry(arrayBuffer, tile = {}) {
   }
 
   const matrix = new Matrix4(geometryData.transformation).multiplyRight(enuMatrix);
-  content.matrix = matrix.invert();
+  content.modelMatrix = matrix.invert();
 
   content.byteLength = arrayBuffer.byteLength;
   return tile;
