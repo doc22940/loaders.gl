@@ -1,18 +1,21 @@
+import {Vector3} from '@math.gl/core';
+import GL from '@luma.gl/constants';
+import {Geometry} from '@luma.gl/core';
 import {COORDINATE_SYSTEM, CompositeLayer} from '@deck.gl/core';
 import {PointCloudLayer} from '@deck.gl/layers';
-import {ScenegraphLayer} from '@deck.gl/mesh-layers';
+import {ScenegraphLayer, SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {log} from '@deck.gl/core';
 
 import {load} from '@loaders.gl/core';
-import {Tileset3D} from '@loaders.gl/tiles';
+import {Tileset3D, TILE_TYPE} from '@loaders.gl/tiles';
+
+const scratchOffset = new Vector3();
 
 const defaultProps = {
   getPointColor: [0, 0, 0],
   pointSize: 1.0,
 
   data: null,
-  _ionAssetId: null,
-  _ionAccessToken: null,
   loadOptions: {throttleRequests: true},
 
   onTilesetLoad: tileset3d => {},
@@ -83,6 +86,7 @@ export default class Tile3DLayer extends CompositeLayer {
   _onTileLoad(tileHeader) {
     this.props.onTileLoad(tileHeader);
     this._updateTileset(this.state.tileset3d);
+    this.setNeedsUpdate();
   }
 
   _updateTileset(tileset3d) {
@@ -90,17 +94,16 @@ export default class Tile3DLayer extends CompositeLayer {
     if (!timeline || !viewport || !tileset3d) {
       return;
     }
-    const frameNumber = tileset3d.update(viewport);
-    this._updateLayerMap(frameNumber);
+    tileset3d.update(viewport);
   }
 
   // `Layer` instances is created and added to the map if it doesn't exist yet.
-  _updateLayerMap(frameNumber) {
+  _updateLayerMap() {
     const {tileset3d, layerMap} = this.state;
 
     // create layers for new tiles
-    const {selectedTiles} = tileset3d;
-    const tilesWithoutLayer = selectedTiles.filter(tile => !layerMap[tile.id]);
+    const {tiles} = tileset3d;
+    const tilesWithoutLayer = tiles.filter(tile => tile.selected && !layerMap[tile.id]);
 
     for (const tile of tilesWithoutLayer) {
       layerMap[tile.id] = {
@@ -110,11 +113,11 @@ export default class Tile3DLayer extends CompositeLayer {
     }
 
     // update layer visibility
-    this._updateLayers(frameNumber);
+    this._updateLayers();
   }
 
   // Grab only those layers who were selected this frame.
-  _updateLayers(frameNumber) {
+  _updateLayers() {
     const {layerMap} = this.state;
     const layerMapValues = Object.values(layerMap);
 
@@ -122,7 +125,7 @@ export default class Tile3DLayer extends CompositeLayer {
       const {tile} = value;
       let {layer} = value;
 
-      if (tile._selectedFrame === frameNumber) {
+      if (tile.selected) {
         if (layer && layer.props && !layer.props.visible) {
           // Still has GPU resource but visibility is turned off so turn it back on so we can render it.
           layer = layer.clone({visible: true});
@@ -137,8 +140,6 @@ export default class Tile3DLayer extends CompositeLayer {
         layerMap[tile.id].layer = layer;
       }
     }
-
-    this.setState({layers: Object.values(layerMap).map(layer => layer.layer)});
   }
 
   _create3DTileLayer(tileHeader) {
@@ -146,42 +147,16 @@ export default class Tile3DLayer extends CompositeLayer {
       return null;
     }
 
-    switch (tileHeader.content.type) {
-      case 'pnts':
+    switch (tileHeader.type) {
+      case TILE_TYPE.POINTCLOUD:
         return this._createPointCloudTileLayer(tileHeader);
-      case 'i3dm':
-      case 'b3dm':
+      case TILE_TYPE.SCENEGRAPH:
         return this._create3DModelTileLayer(tileHeader);
+      case TILE_TYPE.SIMPLEMESH:
+        return this._createSimpleMeshLayer(tileHeader);
       default:
         throw new Error(`Tile3DLayer: Failed to render layer of type ${tileHeader.content.type}`);
     }
-  }
-
-  _create3DModelTileLayer(tileHeader) {
-    const {gltf, instances, cartographicOrigin, modelMatrix} = tileHeader.content;
-
-    const SubLayerClass = this.getSubLayerClass('scenegraph', ScenegraphLayer);
-
-    return new SubLayerClass(
-      {
-        _lighting: 'pbr'
-      },
-      this.getSubLayerProps({
-        id: 'scenegraph'
-      }),
-      {
-        id: `${this.id}-scenegraph-${tileHeader.id}`,
-        // Fix for ScenegraphLayer.modelMatrix, under flag in deck 7.3 to avoid breaking existing code
-        data: instances || [{}],
-        scenegraph: gltf,
-
-        coordinateSystem: COORDINATE_SYSTEM.METER_OFFSETS,
-        coordinateOrigin: cartographicOrigin,
-        modelMatrix,
-        getTransformMatrix: instance => instance.modelMatrix,
-        getPosition: instance => [0, 0, 0]
-      }
-    );
   }
 
   _createPointCloudTileLayer(tileHeader) {
@@ -228,8 +203,70 @@ export default class Tile3DLayer extends CompositeLayer {
     );
   }
 
+  _create3DModelTileLayer(tileHeader) {
+    const {gltf, instances, cartographicOrigin, modelMatrix} = tileHeader.content;
+
+    const SubLayerClass = this.getSubLayerClass('scenegraph', ScenegraphLayer);
+
+    return new SubLayerClass(
+      {
+        _lighting: 'pbr'
+      },
+      this.getSubLayerProps({
+        id: 'scenegraph'
+      }),
+      {
+        id: `${this.id}-scenegraph-${tileHeader.id}`,
+        // Fix for ScenegraphLayer.modelMatrix, under flag in deck 7.3 to avoid breaking existing code
+        data: instances || [{}],
+        scenegraph: gltf,
+
+        coordinateSystem: COORDINATE_SYSTEM.METER_OFFSETS,
+        coordinateOrigin: cartographicOrigin,
+        modelMatrix,
+        getTransformMatrix: instance => instance.modelMatrix,
+        getPosition: instance => [0, 0, 0]
+      }
+    );
+  }
+
+  _createSimpleMeshLayer(tileHeader) {
+    const content = tileHeader.content;
+    const {attributes, matrix, cartographicOrigin, texture} = content;
+    const positions = new Float32Array(attributes.position.value.length);
+    for (let i = 0; i < positions.length; i += 3) {
+      scratchOffset.copy(matrix.transform(attributes.position.value.subarray(i, i + 3)));
+      positions.set(scratchOffset, i);
+    }
+
+    const geometry = new Geometry({
+      drawMode: GL.TRIANGLES,
+      attributes: {
+        positions,
+        normals: attributes.normal,
+        texCoords: attributes.uv0
+      }
+    });
+
+    return new SimpleMeshLayer({
+      id: `mesh-layer-${tileHeader.id}`,
+      mesh: geometry,
+      data: [{}],
+      getPosition: [0, 0, 0],
+      getColor: [255, 255, 255],
+      texture,
+      coordinateOrigin: cartographicOrigin,
+      coordinateSystem: COORDINATE_SYSTEM.METER_OFFSETS
+    });
+  }
+
   renderLayers() {
-    return this.state.layers;
+    const {tileset3d, layerMap} = this.state;
+    if (!tileset3d) {
+      return null;
+    }
+    this._updateLayerMap();
+    return Object.values(layerMap).map(layer => layer.layer);
   }
 }
 
