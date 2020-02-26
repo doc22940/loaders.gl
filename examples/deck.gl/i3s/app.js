@@ -115,7 +115,6 @@ export default class App extends PureComponent {
   _onTilesetLoad(tileset) {
     const {zoom, cartographicCenter} = tileset;
     const [longitude, latitude] = cartographicCenter;
-    console.log(zoom);
 
     const viewState = {
       ...this.state.viewState,
