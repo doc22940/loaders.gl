@@ -9,23 +9,13 @@ import DeckGL from '@deck.gl/react';
 import {MapController, FlyToInterpolator} from '@deck.gl/core';
 // import {Tile3DLayer} from '@deck.gl/geo-layers';
 // remove after deck.gl release a new version of tile-3d-layer
+import ControlPanel from './components/control-panel';
 import Tile3DLayer from './tile-3d-layer';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {StatsWidget} from '@probe.gl/stats-widget';
 
-//SanFrancisco_Bldgs
 const TEST_DATA_URL =
   'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0';
-//philadelphia_Bldgs_text
-//Textured&Untextured
-//'https://urldefense.proofpoint.com/v2/url?u=https-3A__tiles.arcgis.com_tiles_z2tnIkrLQ2BRzr6P_arcgis_rest_services_philadelphia-5FBldgs-5Ftext-5Funtex_SceneServer_layers_0&d=DwIGAg&c=r2dcLCtU9q6n0vrtnDw9vg&r=uUft2jfAcssCZvs7TNFSSg&m=_cRfm773wKwaQfY-gwJnmnFhdfAc2w6eiJ0365x2msY&s=JSwo9eTTG3Pxwevj25groHWmKSPS5IJAB6lzSIoo_ns&e= ';
-// Texturedonly
-//New_York_Buildings
-// const TEST_DATA_URL =
-// 'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/New_York_Buildings/SceneServer/layers/0';
-
-// const TEST_DATA_URL =
-//   'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/philadelphia_Bldgs_text_tex_untex_sub/SceneServer/layers/0';
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
@@ -169,6 +159,14 @@ export default class App extends PureComponent {
     );
   }
 
+  _renderControlPanel() {
+    return (
+      <ControlPanel
+
+      />
+    );
+  }
+
   render() {
     const layers = this._renderLayers();
     const {viewState} = this.state;
@@ -176,6 +174,7 @@ export default class App extends PureComponent {
     return (
       <div>
         {this._renderStats()}
+        {this._renderControlPanel()}
         <DeckGL
           ref={_ => (this._deckRef = _)}
           layers={layers}
@@ -196,4 +195,4 @@ export default class App extends PureComponent {
 }
 
 const deckViewer = document.getElementById('deck-viewer');
-render(<App />, deckViewer);
+render(<App/>, deckViewer);
