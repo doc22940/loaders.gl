@@ -1,4 +1,5 @@
 // TODO delete when deck.gl has a newer version of tile-3d-layer
+// A copy from 'examples/deck.gl/3d-tiles/tile-3d-layer.js
 
 import {Vector3} from '@math.gl/core';
 import GL from '@luma.gl/constants';
