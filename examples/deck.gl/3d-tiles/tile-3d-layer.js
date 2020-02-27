@@ -232,10 +232,11 @@ export default class Tile3DLayer extends CompositeLayer {
 
   _createSimpleMeshLayer(tileHeader) {
     const content = tileHeader.content;
-    const {attributes, matrix, cartographicOrigin, texture} = content;
-    const positions = new Float32Array(attributes.position.value.length);
+    const {attributes, modelMatrix, cartographicOrigin, texture} = content;
+    const {normals, texCoords} = attributes;
+    const positions = new Float32Array(attributes.positions.value.length);
     for (let i = 0; i < positions.length; i += 3) {
-      scratchOffset.copy(matrix.transform(attributes.position.value.subarray(i, i + 3)));
+      scratchOffset.copy(modelMatrix.transform(attributes.positions.value.subarray(i, i + 3)));
       positions.set(scratchOffset, i);
     }
 
@@ -243,21 +244,28 @@ export default class Tile3DLayer extends CompositeLayer {
       drawMode: GL.TRIANGLES,
       attributes: {
         positions,
-        normals: attributes.normal,
-        texCoords: attributes.uv0
+        normals,
+        texCoords
       }
     });
 
-    return new SimpleMeshLayer({
-      id: `mesh-layer-${tileHeader.id}`,
-      mesh: geometry,
-      data: [{}],
-      getPosition: [0, 0, 0],
-      getColor: [255, 255, 255],
-      texture,
-      coordinateOrigin: cartographicOrigin,
-      coordinateSystem: COORDINATE_SYSTEM.METER_OFFSETS
-    });
+    const SubLayerClass = this.getSubLayerClass('simplemesh', SimpleMeshLayer);
+
+    return new SubLayerClass(
+      this.getSubLayerProps({
+        id: 'simplemesh'
+      }),
+      {
+        id: `${this.id}-simplemesh-${tileHeader.id}`,
+        mesh: geometry,
+        data: [{}],
+        getPosition: [0, 0, 0],
+        getColor: [255, 255, 255],
+        texture,
+        coordinateOrigin: cartographicOrigin,
+        coordinateSystem: COORDINATE_SYSTEM.METER_OFFSETS
+      }
+    );
   }
 
   renderLayers() {

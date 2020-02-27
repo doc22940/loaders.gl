@@ -1,24 +1,24 @@
 # I3SLoader
 
-> The `I3SLoader` is experimental.
+> The `I3SLoader` is experimental. Currently only support I3S `MeshPyramids` data format.
 
 A loader for loading an [Indexed 3d Scene (I3S) layer](https://github.com/Esri/i3s-spec), and its geometries and textures data.
 
-| Loader         | Characteristic                                                    |
-| -------------- | ----------------------------------------------------------------- |
-| File Format    | [Basis Universal](https://github.com/BinomialLLC/basis_universal) |
-| File Type      | Json, Binary                                                      |
-| File Extension | `.json` (layer), `.bin` (geometries)                              |
-| File Format    | [i3s](https://www.opengeospatial.org/standards/i3s)               |
-| Data Format    | [Data formats](#data-formats)                                     |
-| Supported APIs | `load`, `parse`                                                   |
+| Loader         | Characteristic                                      |
+| -------------- | --------------------------------------------------- |
+| File Format    | [I3S Layer](https://github.com/Esri/i3s-spec)       |
+| File Type      | Json, Binary                                        |
+| File Extension | `.json` (layer), `.bin` (geometries)                |
+| File Format    | [i3s](https://www.opengeospatial.org/standards/i3s) |
+| Data Format    | [Data formats](#data-formats)                       |
+| Supported APIs | `load`, `parse`                                     |
 
 ## Terms
 
 The terms and concepts used in `i3s` module have the corresponding parts [I3S Spec](https://github.com/Esri/i3s-spec/blob/master/format/Indexed%203d%20Scene%20Layer%20Format%20Specification.md).
 
 - `tileset`: I3S Indexed 3D Layer File.
-- `tileHeader`: I3S node file.
+- `tile`: I3S node file.
 - `tileContent`: I3S node content: geometries, textures, etc.
 
 ## Usage
@@ -37,7 +37,7 @@ const tileset = await load(tileseturl, I3SLoader);
 // load tile with content
 const tileUrl =
   'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0/nodes/2';
-const tile = await load(tileUrl, I3SLoader, {loadContent: true});
+const tile = await load(tileUrl, I3SLoader, {i3s: {loadContent: true}});
 
 // load tile content
 // featureUrl is needed to load the tile content
@@ -49,11 +49,11 @@ await load(tileUrl, I3SLoader, {tile});
 
 ## Options
 
-| Option             | Type | Default | Description                                                                                                     |
-| ------------------ | ---- | ------- | --------------------------------------------------------------------------------------------------------------- |
-| `i3s.isTileset`    | Bool | `false` | Whether to load `Tileset` (Layer 3D Index) file. If not specifies, will decide if follow `argis` url convention |
-| `i3s.isTileHeader` | Bool | `false` | Whether to load `TileHeader`(node) file. If not specifies, will decide if follow `argis` url convention         |
-| `i3s.loadContent`  | Bool | `false` | Whether to load tile content (geometries, texture, etc.)                                                        |
+| Option                     | Type             | Default | Description                                                                                                                   |
+| -------------------------- | ---------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `options.i3s.isTileset`    | `Bool` or `null` | `null`  | Whether to load `Tileset` (Layer 3D Index) file. If not specifies, will decide if follow `ArcGIS` tile layers' url convention |
+| `options.i3s.isTileHeader` | `Bool` or `null` | `null`  | Whether to load `TileHeader`(node) file. If not specifies, will decide if follow `argis` url convention                       |
+| `options.i3s.loadContent`  | `Bool`           | `true`  | Whether to load tile content (geometries, texture, etc.)                                                                      |
 
 ## Data formats
 
@@ -112,3 +112,4 @@ After content is loaded, the following fields are guaranteed. But different tile
 | `attributes.positions` | `Object` | `{value, type, size, normalized}` |
 | `attributes.normals`   | `Object` | `{value, type, size, normalized}` |
 | `attributes.colors`    | `Object` | `{value, type, size, normalized}` |
+| `attributes.texCoords` | `Object` | `{value, type, size, normalized}` |

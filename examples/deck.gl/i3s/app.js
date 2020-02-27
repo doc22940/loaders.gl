@@ -4,13 +4,13 @@ import React, {PureComponent} from 'react';
 import {render} from 'react-dom';
 import {StaticMap} from 'react-map-gl';
 
+import {lumaStats} from '@luma.gl/core';
 import DeckGL from '@deck.gl/react';
 import {MapController, FlyToInterpolator} from '@deck.gl/core';
+// import {Tile3DLayer} from '@deck.gl/geo-layers';
 import Tile3DLayer from './tile-3d-layer';
-// import I3STIleLayer from './i3s-3d-layer/i3s-3d-layer';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {StatsWidget} from '@probe.gl/stats-widget';
-import {lumaStats} from '@luma.gl/core';
 
 //SanFrancisco_Bldgs
 const TEST_DATA_URL =
