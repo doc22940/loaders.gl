@@ -13,16 +13,12 @@ import ControlPanel from './components/control-panel';
 import Tile3DLayer from './tile-3d-layer';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {StatsWidget} from '@probe.gl/stats-widget';
-
-const TEST_DATA_URL =
-  'https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer/layers/0';
+import {INITIAL_EXAMPLE_NAME, EXAMPLES} from './examples';
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 const TRANSITION_DURAITON = 4000;
-
-//SF
 
 const INITIAL_VIEW_STATE = {
   longitude: -120,
@@ -36,47 +32,14 @@ const INITIAL_VIEW_STATE = {
   maxZoom: 30,
   zoom: 14.5
 };
-/* */
-//NY
-/*
-const INITIAL_VIEW_STATE = {
- longitude: -73.97785639190995,
- latitude: 40.75262236078426,
- height: 600,
- width: 800,
- pitch: 45,
- maxPitch: 60,
- bearing: 0,
- minZoom: 2,
- maxZoom: 30,
- zoom: 14.5
-};
-*/
-
-//philadelphia_Bldgs_text
-/*
-const INITIAL_VIEW_STATE = {
-  longitude: -75.16725679895995,
-  latitude: 39.95667467886362,
-  height: 600,
-  width: 800,
-  pitch: 45,
-  maxPitch: 60,
-  bearing: 0,
-  minZoom: 2,
-  maxZoom: 30,
-  zoom: 14.5
-};
- */
 
 export default class App extends PureComponent {
   constructor(props) {
     super(props);
     this._tilesetStatsWidget = null;
     this.state = {
-      renderCesium: false,
-      layerMap: {},
-      layers: [],
+      name: INITIAL_EXAMPLE_NAME,
+      dataUrl: EXAMPLES[INITIAL_EXAMPLE_NAME].url,
       viewState: INITIAL_VIEW_STATE
     };
   }
@@ -131,9 +94,10 @@ export default class App extends PureComponent {
   }
 
   _renderLayers() {
+    const {dataUrl} = this.state;
     return [
       new Tile3DLayer({
-        data: TEST_DATA_URL,
+        data: dataUrl,
         loader: I3SLoader,
         onTilesetLoad: this._onTilesetLoad.bind(this),
         onTileLoad: () => this._updateStatWidgets(),
@@ -160,9 +124,17 @@ export default class App extends PureComponent {
   }
 
   _renderControlPanel() {
+    const {tileset, name} = this.state;
     return (
       <ControlPanel
-
+        tileset={tileset}
+        name={name}
+        onExampleChange={({name, example}) =>
+          this.setState({
+            name,
+            dataUrl: example.url
+          })
+        }
       />
     );
   }
@@ -172,7 +144,7 @@ export default class App extends PureComponent {
     const {viewState} = this.state;
 
     return (
-      <div>
+      <div style={{position: 'relative', height: '100%'}}>
         {this._renderStats()}
         {this._renderControlPanel()}
         <DeckGL
@@ -194,5 +166,6 @@ export default class App extends PureComponent {
   }
 }
 
-const deckViewer = document.getElementById('deck-viewer');
-render(<App/>, deckViewer);
+export function renderToDOM(container) {
+  render(<App />, container);
+}

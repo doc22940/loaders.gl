@@ -9,7 +9,7 @@ const MAP_STYLES = {
   'Base Map: Dark': 'mapbox://styles/mapbox/dark-v9'
 };
 
-export const INITIAL_MAP_STYLE = MAP_STYLES['Base Map: Dark'];
+const INITIAL_MAP_STYLE = MAP_STYLES['Base Map: Dark'];
 
 const Container = styled.div`
   display: flex;
@@ -17,7 +17,7 @@ const Container = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  max-width: 280px;
+  width: 200px;
   background: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   padding: 12px 24px;
@@ -44,30 +44,28 @@ const InfoContainer = styled.div`
   border-style: groove;
 `;
 
-const Description = styled.div`
-  margin-top: 6px;
-  font-size: 12px;
-  color: #555;
-  line-height: 1.4em;
-`;
-
 const propTypes = {
   name: PropTypes.string.isRequired,
   tileset: PropTypes.object,
   mapStyles: PropTypes.object,
-  selectedMapStyle: PropTypes.string,
   onExampleChange: PropTypes.func,
-  onMapStyleChange: PropTypes.func,
   children: PropTypes.node
 };
 
 const defaultProps = {
   droppedFile: null,
-  onChange: () => {
-  }
+  onChange: () => {}
 };
 
 export default class ControlPanel extends PureComponent {
+  constructor(props) {
+    super(props);
+    this._renderMapStyles = this._renderMapStyles.bind(this);
+    this.state = {
+      selectedMapStyle: INITIAL_MAP_STYLE
+    };
+  }
+
   _renderExamples() {
     const {name, onExampleChange} = this.props;
     return (
@@ -75,10 +73,7 @@ export default class ControlPanel extends PureComponent {
         value={name}
         onChange={evt => {
           const selected = evt.target.value;
-          this.setState({
-            name: selected,
-            example: EXAMPLES[selected]
-          });
+          this.setState({selected});
           onExampleChange({
             name: selected,
             example: EXAMPLES[selected]
@@ -88,7 +83,7 @@ export default class ControlPanel extends PureComponent {
         {Object.keys(EXAMPLES).map(key => {
           const example = EXAMPLES[key];
           return (
-            <option key={example} value={example.name}>
+            <option key={key} value={example.name}>
               {example.name}
             </option>
           );
@@ -98,14 +93,15 @@ export default class ControlPanel extends PureComponent {
   }
 
   _renderMapStyles() {
-    const {onMapStyleChange, mapStyles = MAP_STYLES, selectedMapStyle} = this.props;
+    const {mapStyles = MAP_STYLES} = this.props;
+    const {selectedMapStyle} = this.state;
 
     return (
       <DropDown
         value={selectedMapStyle}
         onChange={evt => {
           const selected = evt.target.value;
-          onMapStyleChange({selectedMapStyle: selected});
+          this.setState({selectedMapStyle: selected});
         }}
       >
         {Object.keys(mapStyles).map(key => {
@@ -123,12 +119,8 @@ export default class ControlPanel extends PureComponent {
     if (!this.props.tileset) {
       return null;
     }
-    console.log(this.props.tileset);
 
-    return (
-      <InfoContainer>{this.props.tileset.url}
-      </InfoContainer>
-    );
+    return <InfoContainer>{this.props.tileset.tileset.name}</InfoContainer>;
   }
 
   render() {

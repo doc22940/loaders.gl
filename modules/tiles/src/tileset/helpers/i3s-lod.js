@@ -50,7 +50,7 @@ export function lodJudge(tile, frameState) {
     return 'OUT';
   }
   // Hack: 1000 is a Magic number to get the correct LoD
-  if (!tile.header.children || screenSize <= tile.lodMetricValue) {
+  if (!tile.header.children || screenSize <= tile.lodMetricValue - 1000) {
     return 'DRAW';
   } else if (tile.header.children) {
     return 'DIG';
